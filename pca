@@ -1,0 +1,44 @@
+file.choose()
+file_path <- "/Users/carlaperscky/Desktop/wd/merged_camel_pca_metadata.csv"
+pca_data2 <- fread(file_path, header = FALSE)
+head(pca_data2)
+pca_data2 <- pca_data2 %>%
+  select(-1)
+head(pca_data2)
+pca_data2 <- pca_data2[-1, ]
+pca_data2 <- pca_data2 %>%
+  mutate(across(V2:V4, as.numeric)) %>%
+  mutate(V5 = as.factor(V5))
+print(pca_data2)
+pca <- prcomp(pca_data2 %>% select(V2:V4), center = TRUE, scale. = TRUE)
+explained_variance <- round(100 * (pca$sdev^2 / sum(pca$sdev^2)), 2)
+p1 <- ggplot(pca_scores, aes(x = PC1, y = PC2, color = species)) +
+  geom_point(size = 3) +
+  labs(
+    title = "PCA1 vs PCA2",
+    x = paste0("PC1 (", explained_variance[1], "% Variance)"),
+    y = paste0("PC2 (", explained_variance[2], "% Variance)")
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+p2 <- ggplot(pca_scores, aes(x = PC1, y = PC3, color = species)) +
+  geom_point(size = 3) +
+  labs(
+    title = "PCA1 vs PCA3",
+    x = paste0("PC1 (", explained_variance[1], "% Variance)"),
+    y = paste0("PC3 (", explained_variance[3], "% Variance)")
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+p3 <- ggplot(pca_scores, aes(x = PC2, y = PC3, color = species)) +
+  geom_point(size = 3) +
+  labs(
+    title = "PCA2 vs PCA3",
+    x = paste0("PC2 (", explained_variance[2], "% Variance)"),
+    y = paste0("PC3 (", explained_variance[3], "% Variance)")
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+print(p1)
+print(p2)
+print(p3)
