@@ -1,48 +1,34 @@
+## PCA2
 file.choose()
-file_path <- "/Users/carlaperscky/Desktop/wd/merged_camel_pca_metadata.csv"
+file.path2 <- "/Users/carlaperscky/Desktop/wd/Rstudio2024/pca.eigenvec"
 install.packages("data.table")
-install.packages("dplyr")
-install.packages("ggplot2")
 library(data.table)
+pca_data <- fread(file.path2, header = FALSE)
+head(pca_data)
 library(dplyr)
-library(ggplot2)
-pca_data2 <- fread(file_path, header = FALSE)
-pca_data2 <- pca_data2[-1, ]
-pca_data2 <- pca_data2 %>%
-  mutate(across(V2:V4, as.numeric),
-         V5 = as.factor(V5))
-pca <- prcomp(pca_data2 %>% select(V2:V4), center = TRUE, scale. = TRUE)
-explained_variance <- round(100 * (pca$sdev^2 / sum(pca$sdev^2)), 2)
-pca_scores <- as.data.frame(pca$x)
-pca_scores$species <- pca_data2$V5
-p1 <- ggplot(pca_scores, aes(x = PC1, y = PC2, color = species)) +
+pca_data <- pca_data[-1, ]
+pca_data <- pca_data %>%
+  select(-1)
+pca_data <- pca_data %>%
+  mutate(across(V3:V4, as.numeric))
+colnames(pca_data)
+colnames(pca_data)[1:3] <- c("ID", "PC1", "PC2")
+colnames(pca_data)
+write.csv(pca_data, "camel_pca.csv", row.names = FALSE)
+merged_camel <- merge(pca_data, camelpopulation, by = "ID")
+merged_camel <- merged_camel [ , -1]
+head(merged_camel)
+merged_camel$SPECIES <- as.factor(merged_camel$SPECIES)
+pca_result <- prcomp(merged_camel[, c("PC1", "PC2")], center = TRUE, scale. = TRUE)
+pca_scores <- as.data.frame(pca_result$x)
+pca_scores$SPECIES <- merged_camel$SPECIES
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = SPECIES)) +
   geom_point(size = 3) +
+  scale_color_manual(values = c("c.dromedarius" = "green", "c.bactrianus" = "red")) +
   labs(
-    title = "PCA1 vs PCA2",
-    x = paste0("PC1 (", explained_variance[1], "% Variance)"),
-    y = paste0("PC2 (", explained_variance[2], "% Variance)")
+    title = "PCA Analysis of Camels",
+    x = "Principal Component 1",
+    y = "Principal Component 2"
   ) +
-  theme_minimal() +
-  theme(panel.grid = element_blank())
-p2 <- ggplot(pca_scores, aes(x = PC1, y = PC3, color = species)) +
-  geom_point(size = 3) +
-  labs(
-    title = "PCA1 vs PCA3",
-    x = paste0("PC1 (", explained_variance[1], "% Variance)"),
-    y = paste0("PC3 (", explained_variance[3], "% Variance)")
-  ) +
-  theme_minimal() +
-  theme(panel.grid = element_blank())
-p3 <- ggplot(pca_scores, aes(x = PC2, y = PC3, color = species)) +
-  geom_point(size = 3) +
-  labs(
-    title = "PCA2 vs PCA3",
-    x = paste0("PC2 (", explained_variance[2], "% Variance)"),
-    y = paste0("PC3 (", explained_variance[3], "% Variance)")
-  ) +
-  theme_minimal() +
-  theme(panel.grid = element_blank())
-print(p1)
-print(p2)
-print(p3)
-write.csv(pca_scores, "camelsv_pca.csv", row.names = FALSE)
+  theme_minimal()
+summary(pca_result)
